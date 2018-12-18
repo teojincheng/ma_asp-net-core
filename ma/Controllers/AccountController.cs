@@ -69,6 +69,7 @@ namespace ma.Controllers
             return View();
         }
 
+        //server side processing. 
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
