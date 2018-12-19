@@ -39,6 +39,7 @@ namespace ma.Controllers
         [HttpPost]
         public ActionResult AddItem(AddItemViewModel viewModel)
         {
+            System.Globalization.CultureInfo.CurrentCulture.ClearCachedData();
             DateTime DateNow = DateTime.UtcNow;
 
             using (SqlConnection sqlConnection = new SqlConnection(constantValues.SQLConncectionString))
