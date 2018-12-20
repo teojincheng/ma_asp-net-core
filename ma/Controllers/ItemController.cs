@@ -5,6 +5,8 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using ma.ConstantsValues;
+using ma.Models;
+using Newtonsoft.Json;
 using ma.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 
@@ -73,7 +75,7 @@ namespace ma.Controllers
                        SqlParameter param3= new SqlParameter
                         {
                             ParameterName = "@expirydate",
-                            Value = DateNow,
+                            Value = viewModel.ExpiryDate,
                             SqlDbType = SqlDbType.DateTime,
                             Direction = ParameterDirection.Input
 
@@ -106,6 +108,79 @@ namespace ma.Controllers
 
 
             return View();
+        }
+
+
+        /// <summary>
+        /// make sense of what the user wants to search/sort with datatables
+        /// call another function to do server side processing of data
+        /// </summary>
+        /// <param name="model">data sent by datatables js</param>
+        /// <returns></returns>
+        public ActionResult ItemsTableProcessing(DataTablesAjaxPostModel model)
+        {
+            //string search = model.search.value;
+            string sortBy = "";
+            string sortDirection = "";
+            //sortBy = model.columns[model.order[0].column].data;
+            //sortDirection = model.order[0].dir;
+
+            var listOfItem = new List<Item>();
+
+            DataSet ds = new DataSet("Items");
+            using (SqlConnection conn = new SqlConnection(constantValues.SQLConncectionString))
+            {
+                try
+                {
+                    SqlCommand sqlComm = new SqlCommand("SelectFromItem", conn);
+                    sqlComm.CommandType = CommandType.StoredProcedure;
+                    SqlDataAdapter da = new SqlDataAdapter();
+                    da.SelectCommand = sqlComm;
+                    da.Fill(ds);
+
+                    foreach (DataRow row in ds.Tables[0].Rows)
+                    {
+                        int rID = ((int)row["ID"]);
+                        string rItemName = ((string)row["ItemName"]);
+                        string rLocation = ((string)row["ItemLocation"]);
+                        string rDateTime = ((string)row["ExpiryDate"]);
+                        string rOtherText = ((string)row["OtherText"]);
+
+                        listOfItem.Add(
+                            new Item
+                            {
+                                ID = rID,
+                                ItemName = rItemName,
+                                ItemLocation = rLocation,
+                                ExpiryDate = rDateTime,
+                                OtherText = rOtherText
+                            }
+                            );
+                    }
+                }
+                catch(Exception e)
+                {
+
+                }
+            }//close sql conn
+
+            int recordsFiltered = listOfItem.Count;
+            listOfItem = listOfItem.GetRange(model.start, Math.Min(model.length, listOfItem.Count - model.start));
+            To_DatatablesJS<Item> dataTableJsData = new To_DatatablesJS<Item>();
+            dataTableJsData.draw = model.draw;
+            dataTableJsData.recordsTotal = listOfItem.Count();
+            dataTableJsData.recordsFiltered = recordsFiltered;
+            dataTableJsData.data = listOfItem;
+
+            var jsonResult = Json(dataTableJsData);
+            //jsonResult.MaxJsonLength = int.MaxValue;
+
+            return jsonResult;
+
+
+
+
+
         }
 
 

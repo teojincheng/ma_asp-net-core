@@ -1,0 +1,40 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<table id="itemsTable" class="display" style="width:100%">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Item Name</th>
+            <th>Item Location</th>
+            <th>Expiry Date</th>
+            <th>Other Text</th>
+        </tr>
+    </thead>
+
+</table>
+
+@section Scripts {
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#itemsTable').DataTable({
+            "processing": true,
+            "serverSide": true,
+            "ajax": '@Url.Action("ItemsTableProcessing", "Item")',
+            "columns": [
+                { data: 'id' },
+                { data: 'itemName' },
+                { data: 'itemLocation' },
+                { data: 'expiryDate' },
+                { data: 'otherText' }
+
+            ]
+        });
+    });
+</script>
+}
+
