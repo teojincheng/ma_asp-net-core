@@ -24,7 +24,10 @@
         $('#itemsTable').DataTable({
             "processing": true,
             "serverSide": true,
-            "ajax": '@Url.Action("ItemsTableProcessing", "Item")',
+            "ajax": {
+                "url": '@Url.Action("ItemsTableProcessing", "Item")',
+                "type": "POST"
+            },
             "columns": [
                 { data: 'id' },
                 { data: 'itemName' },

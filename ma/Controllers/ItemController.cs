@@ -110,6 +110,19 @@ namespace ma.Controllers
             return View();
         }
 
+        /// <summary>
+        /// queries the database based the critieria the use chose from datatables js UI
+        /// </summary>
+        /// <param name="searchValue">value in search box</param>
+        /// <param name="sortBy">column user want to sort by</param>
+        /// <param name="sortDirection">asc or desc</param>
+        /// <returns></returns>
+        /*
+        public List<Item> DoQueryBasedOnInput(string searchValue = "", string sortBy = "", string sortDirection = "")
+        {
+
+        }
+        */
 
         /// <summary>
         /// make sense of what the user wants to search/sort with datatables
@@ -117,14 +130,31 @@ namespace ma.Controllers
         /// </summary>
         /// <param name="model">data sent by datatables js</param>
         /// <returns></returns>
+        [HttpPost]
         public ActionResult ItemsTableProcessing(DataTablesAjaxPostModel model)
         {
-            //string search = model.search.value;
+            string search = "";
             string sortBy = "";
             string sortDirection = "";
-            //sortBy = model.columns[model.order[0].column].data;
-            //sortDirection = model.order[0].dir;
+            if (model.search != null)
+            {
+                search = model.search.value;
+            }
+          
+            if(model.columns.Count > 0)
+            {
+                sortBy = model.columns[model.order[0].column].data;
+            }
 
+            if (model.order.Count > 0)
+            {
+
+                sortDirection = model.order[0].dir;
+            }
+            /*
+             * sortby value default is id
+             * sortdirection value default is asc
+             */ 
             var listOfItem = new List<Item>();
 
             DataSet ds = new DataSet("Items");
@@ -132,8 +162,41 @@ namespace ma.Controllers
             {
                 try
                 {
-                    SqlCommand sqlComm = new SqlCommand("SelectFromItem", conn);
+                    SqlCommand sqlComm = new SqlCommand("SelectFromItemBasedOn", conn);
                     sqlComm.CommandType = CommandType.StoredProcedure;
+
+                    SqlParameter param1 = new SqlParameter
+                    {
+                        ParameterName = "@search",
+                        Value = search,
+                        SqlDbType = SqlDbType.NVarChar,
+                        Direction = ParameterDirection.Input
+
+                    };
+
+
+                    SqlParameter param2 = new SqlParameter
+                    {
+                        ParameterName = "@sortby",
+                        Value = sortBy,
+                        SqlDbType = SqlDbType.NVarChar,
+                        Direction = ParameterDirection.Input
+
+                    };
+
+                    SqlParameter param3 = new SqlParameter
+                    {
+                        ParameterName = "@sortdirection",
+                        Value = sortDirection,
+                        SqlDbType = SqlDbType.NVarChar,
+                        Direction = ParameterDirection.Input
+
+                    };
+                    sqlComm.Parameters.Add(param1);
+                    sqlComm.Parameters.Add(param2);
+                    sqlComm.Parameters.Add(param3);
+
+
                     SqlDataAdapter da = new SqlDataAdapter();
                     da.SelectCommand = sqlComm;
                     da.Fill(ds);
