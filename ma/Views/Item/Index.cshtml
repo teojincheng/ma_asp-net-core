@@ -22,6 +22,7 @@
 <script type="text/javascript">
     $(document).ready(function () {
         $('#itemsTable').DataTable({
+            "dom": 'Bfrtip',
             "processing": true,
             "serverSide": true,
             "ajax": {
@@ -35,7 +36,8 @@
                 { data: 'expiryDate' },
                 { data: 'otherText' }
 
-            ]
+            ],
+            "buttons":['excel']
         });
     });
 </script>

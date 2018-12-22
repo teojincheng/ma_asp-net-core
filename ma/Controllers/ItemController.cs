@@ -9,7 +9,9 @@ using ma.Models;
 using Newtonsoft.Json;
 using ma.ViewModel;
 using Microsoft.AspNetCore.Mvc;
-
+using System.Security.Claims;
+using System.IO;
+using Microsoft.AspNetCore.Hosting;
 
 namespace ma.Controllers
 {
@@ -17,7 +19,12 @@ namespace ma.Controllers
     {
 
         Constants constantValues = new Constants();
+        private readonly IHostingEnvironment _hostingEnvironment;
 
+        public ItemController(IHostingEnvironment hostingEnvironment)
+        {
+            _hostingEnvironment = hostingEnvironment;
+        }
 
         public IActionResult Index()
         {
@@ -35,6 +42,8 @@ namespace ma.Controllers
 
         /// <summary>
         /// server side processing for adding item into database. 
+        /// adds attachment into folder
+        /// insert database records
         /// </summary>
         /// <param name="viewModel">data filled inside the form</param>
         /// <returns></returns>
@@ -43,6 +52,9 @@ namespace ma.Controllers
         {
             System.Globalization.CultureInfo.CurrentCulture.ClearCachedData();
             DateTime DateNow = DateTime.UtcNow;
+            //get user id from asp.net identity. 
+            var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            int newItemTableId = 0;
 
             using (SqlConnection sqlConnection = new SqlConnection(constantValues.SQLConncectionString))
             {
@@ -90,14 +102,48 @@ namespace ma.Controllers
 
                         };
 
+                        SqlParameter param5 = new SqlParameter
+                        {
+                            ParameterName = "@qty",
+                            Value = viewModel.Qty,
+                            SqlDbType = SqlDbType.Int,
+                            Direction = ParameterDirection.Input
+
+                        };
+
+                        SqlParameter param6 = new SqlParameter
+                        {
+                            ParameterName = "@userid",
+                            Value = userId,
+                            SqlDbType = SqlDbType.NVarChar,
+                            Direction = ParameterDirection.Input
+
+                        };
+
+                        SqlParameter param7 = new SqlParameter
+                        {
+                            ParameterName = "@newRecordId",
+                            SqlDbType = SqlDbType.Int,
+                            Direction = ParameterDirection.Output
+
+                        };
+
+
+
                         cmd.Parameters.Add(param1);
                         cmd.Parameters.Add(param2);
                         cmd.Parameters.Add(param3);
                         cmd.Parameters.Add(param4);
-          
-                        sqlConnection.Open();
-                        cmd.ExecuteNonQuery();
+                        cmd.Parameters.Add(param5);
+                        cmd.Parameters.Add(param6);
+                        cmd.Parameters.Add(param7);
 
+                        sqlConnection.Open();
+                        //so that it return a output value.
+                        cmd.ExecuteScalar();
+                        newItemTableId = (int)cmd.Parameters["@newRecordId"].Value;
+
+                        
                     }
                 }
                 catch (Exception e)
@@ -107,26 +153,115 @@ namespace ma.Controllers
             } // end using
 
 
+            var friendlyFileName = "";
+            var storageFileName = "";
+            var filePathToSave = "";
+            // if there is attachment for the form submission. 
+            if (viewModel.AttachmentFile != null)
+            {
+                //store image info folder that is part of project but outside wwwroot. 
+                try
+                {
+                    friendlyFileName = Path.GetFileName(viewModel.AttachmentFile.FileName);
+                    storageFileName = "";
+                    filePathToSave = "";
+
+                    //.net core of server.map path
+                    string contentRootPath = _hostingEnvironment.ContentRootPath;
+
+                    var filenameWithoutExt = Path.GetFileNameWithoutExtension(viewModel.AttachmentFile.FileName);
+                    var fileExt = Path.GetExtension(viewModel.AttachmentFile.FileName);
+                    storageFileName = filenameWithoutExt + "-" + Guid.NewGuid().ToString() + "-" + fileExt;
+
+                    filePathToSave = Path.Combine(contentRootPath + "\\Attachments", storageFileName);
+                    viewModel.AttachmentFile.CopyTo(new FileStream(filePathToSave, FileMode.Create));
+                }catch(Exception ex)
+                {
+
+                }
+
+                //save details of attachement into attachment database table. 
+
+                using (SqlConnection sqlConnection = new SqlConnection(constantValues.SQLConncectionString))
+                {
+                    try
+                    {
+                        using (SqlCommand cmd = new SqlCommand("InsertIntoAttachment", sqlConnection))
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+
+
+
+                            SqlParameter param1 = new SqlParameter
+                            {
+                                ParameterName = "@filename",
+                                Value = storageFileName,
+                                SqlDbType = SqlDbType.NVarChar,
+                                Direction = ParameterDirection.Input
+
+                            };
+
+
+                            SqlParameter param2 = new SqlParameter
+                            {
+                                ParameterName = "@friendlyfilename",
+                                Value = friendlyFileName,
+                                SqlDbType = SqlDbType.NVarChar,
+                                Direction = ParameterDirection.Input
+
+                            };
+
+                            SqlParameter param3 = new SqlParameter
+                            {
+                                ParameterName = "@filepath",
+                                Value = filePathToSave,
+                                SqlDbType = SqlDbType.NVarChar,
+                                Direction = ParameterDirection.Input
+
+                            };
+
+                            SqlParameter param4 = new SqlParameter
+                            {
+                                ParameterName = "@itemid",
+                                Value = newItemTableId,
+                                SqlDbType = SqlDbType.Int,
+                                Direction = ParameterDirection.Input
+
+                            };
+
+                            
+
+
+
+                            cmd.Parameters.Add(param1);
+                            cmd.Parameters.Add(param2);
+                            cmd.Parameters.Add(param3);
+                            cmd.Parameters.Add(param4);
+                         
+
+                            sqlConnection.Open();
+                            cmd.ExecuteNonQuery();
+
+                        }
+                    }
+                    catch (Exception e)
+                    {
+
+                    }
+                } // end using
+
+
+
+            }
+
+
             return View();
         }
 
-        /// <summary>
-        /// queries the database based the critieria the use chose from datatables js UI
-        /// </summary>
-        /// <param name="searchValue">value in search box</param>
-        /// <param name="sortBy">column user want to sort by</param>
-        /// <param name="sortDirection">asc or desc</param>
-        /// <returns></returns>
-        /*
-        public List<Item> DoQueryBasedOnInput(string searchValue = "", string sortBy = "", string sortDirection = "")
-        {
 
-        }
-        */
 
         /// <summary>
         /// make sense of what the user wants to search/sort with datatables
-        /// call another function to do server side processing of data
         /// </summary>
         /// <param name="model">data sent by datatables js</param>
         /// <returns></returns>
