@@ -5,6 +5,35 @@
 
 <h2>@ViewData["Title"]</h2>
 
+<!-- Button trigger modal -->
+
+
+<!-- Modal -->
+<div class="modal fade" id="viewInfoModal" tabindex="-1" role="dialog" aria-labelledby="ModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="ModalLabel">Item Name</h4>
+
+            </div>
+            <div class="modal-body">
+                <p id="pForItemName">Item Name</p>
+                <p id="pForItemLocation">Item Location</p>
+                <p id="pForExpiryDate">Expiry Date</p>
+                <p id="pForOtherText">Other Text</p>
+                <p id="pForQty">Qty</p>
+               <div id="div-for-image"></div>
+                <button>edit</button>
+            </div>
+           
+        </div>
+    </div>
+  
+</div>
+
 <table id="itemsTable" class="display" style="width:100%">
     <thead>
         <tr>
@@ -19,8 +48,11 @@
 </table>
 
 @section Scripts {
-<script type="text/javascript">
+    <script type="text/javascript">
     $(document).ready(function () {
+        /**
+         *Initialaise datatables
+         */
         $('#itemsTable').DataTable({
             "dom": 'Bfrtip',
             "processing": true,
@@ -30,7 +62,7 @@
                 "type": "POST"
             },
             "columns": [
-                { data: 'id' },
+                { data: 'id', visible: false },
                 { data: 'itemName' },
                 { data: 'itemLocation' },
                 { data: 'expiryDate' },
@@ -39,7 +71,83 @@
             ],
             "buttons":['excel']
         });
-    });
-</script>
+
+        /**
+         * visually let user know he or she has selected a column
+         * */
+        var table = $('#itemsTable').DataTable();
+        $('#itemsTable tbody').on('click', 'tr', function () {
+            if ($(this).hasClass('selected')) {
+                $(this).removeClass('selected');
+            }
+            else {
+                table.$('tr.selected').removeClass('selected');
+                $(this).addClass('selected');
+                var rowData = (table.row(this).data());
+
+                $.ajax({
+                    url:'@Url.Action("GetDataForOneItem", "Item")',
+                    type: "GET",
+                    data: { id: rowData.id },
+                    success: function (result) {
+                        console.log("fetch result");
+                        console.log(result);
+                        //console.log(result.itemName);
+                        appendImage(@Url.Content("~/Attachments/")+result.fileName);
+                    },
+                    error: function (xhr, status, error) {
+                        
+                    }
+                });
+
+                $('#viewInfoModal').modal('show');
+            }
+            
+        });
+
+        //when user has closed the modal, let the row in datatables no longer be selected. 
+        $('#viewInfoModal').on('hidden.bs.modal', function () {
+            table.$('tr.selected').removeClass('selected');
+        });
+
+        /**
+         * 
+         * param imgSrc
+         */
+        function appendImage(imgSrc) {
+            var imgElement = document.createElement("img");
+            imgElement.setAttribute('src', imgSrc);
+            //imgElement.setAttribute('class', "img-fill-parent");
+
+            if (imgSrc.includes(null)) {
+                imgElement.setAttribute('alt', '');
+            }
+            //imgElement.setAttribute('id', "img-id");
+
+            var imgdiv = document.getElementById("div-for-image");
+            imgdiv.appendChild(imgElement);
+
+
+            /*
+            if (!imgSrc.includes(null)) {
+                var btnElement = document.createElement("input");
+                btnElement.setAttribute("id", "delete-img-btn");
+                btnElement.setAttribute("onclick", "delImgFunction()");
+                btnElement.type = "button";
+                btnElement.value = "Delete";
+
+                imgdiv.appendChild(btnElement);
+            }
+            */
+
+        }
+
+    }); //close document.ready
+
+
+
+
+
+    </script>
 }
 

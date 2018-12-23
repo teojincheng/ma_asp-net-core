@@ -382,5 +382,107 @@ namespace ma.Controllers
         }
 
 
+        //methods to return data from ajax request from the view
+        #region
+        /// <summary>
+        /// query the database and return the data for one item
+        /// so that the view can use it
+        /// </summary>
+        /// <param name="id">id of the item in the database</param>
+        /// <returns></returns>
+        [HttpGet]
+        public ActionResult GetDataForOneItem(int id)
+        {
+
+            List<Item> listOfItem = new List<Item>();
+            DataSet ds = new DataSet("Item");
+            using (SqlConnection conn = new SqlConnection(constantValues.SQLConncectionString))
+            {
+                try
+                {
+                    SqlCommand sqlComm = new SqlCommand("SelectOneItem", conn);
+                    sqlComm.CommandType = CommandType.StoredProcedure;
+
+                    SqlParameter param1 = new SqlParameter
+                    {
+                        ParameterName = "@id",
+                        Value = id,
+                        SqlDbType = SqlDbType.Int,
+                        Direction = ParameterDirection.Input
+
+                    };
+
+
+          
+                    sqlComm.Parameters.Add(param1);
+                    
+
+
+                    SqlDataAdapter da = new SqlDataAdapter();
+                    da.SelectCommand = sqlComm;
+                    da.Fill(ds);
+
+                    foreach (DataRow row in ds.Tables[0].Rows)
+                    {
+                        int rID = ((int)row["ID"]);
+                        string rItemName = ((string)row["ItemName"]);
+                        string rLocation = ((string)row["ItemLocation"]);
+                        string rDateTime = ((string)row["ExpiryDate"]);
+                        string rOtherText = ((string)row["OtherText"]);
+                        int rQty = ((int)row["Qty"]);
+
+                         if (!row.IsNull("FileName"))
+                            {
+                            string rFileName = ((string)row["FileName"]);
+
+
+
+                            listOfItem.Add(
+                                new Item
+                                {
+                                    ID = rID,
+                                    ItemName = rItemName,
+                                    ItemLocation = rLocation,
+                                    ExpiryDate = rDateTime,
+                                    OtherText = rOtherText,
+                                    Qty = rQty,
+                                    FileName = rFileName
+                                }
+                                );
+
+                        }
+                        else
+                        {
+
+                            listOfItem.Add(
+                                new Item
+                                {
+                                    ID = rID,
+                                    ItemName = rItemName,
+                                    ItemLocation = rLocation,
+                                    ExpiryDate = rDateTime,
+                                    OtherText = rOtherText,
+                                    Qty = rQty
+                                   
+                                }
+                                );
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+
+                }
+            }//close sql conn
+
+            var item = listOfItem.First();
+
+            return Json(item);
+        }
+
+
+        #endregion
+
+
     }
 }

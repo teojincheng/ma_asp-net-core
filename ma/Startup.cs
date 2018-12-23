@@ -13,6 +13,8 @@ using ma.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ma.Models;
+using Microsoft.Extensions.FileProviders;
+using System.IO;
 
 namespace ma
 {
@@ -63,7 +65,13 @@ namespace ma
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-            //
+            //included to try and use urlconent on view with razor. 
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+            Path.Combine(Directory.GetCurrentDirectory(), "Attachments")),
+                RequestPath = "/Attachments"
+            });
             app.UseAuthentication();
             app.UseCookiePolicy();
 
