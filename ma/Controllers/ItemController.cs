@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.IO;
 using Microsoft.AspNetCore.Hosting;
+using System.Globalization;
 
 namespace ma.Controllers
 {
@@ -260,6 +261,16 @@ namespace ma.Controllers
 
 
 
+        public ActionResult EditItem(int id)
+        {
+           Item currentItem =  GetItemFromDB(id);
+            EditItemViewModel currentItemViewModel = new EditItemViewModel { Id= currentItem.ID, Name= currentItem.ItemName, Location = currentItem.ItemLocation, Remarks = currentItem.OtherText,Qty = currentItem.Qty };
+
+            return View(currentItemViewModel);
+        }
+
+        
+
         /// <summary>
         /// make sense of what the user wants to search/sort with datatables
         /// </summary>
@@ -483,6 +494,96 @@ namespace ma.Controllers
 
         #endregion
 
+
+        public Item GetItemFromDB(int id)
+        {
+
+            List<Item> listOfItem = new List<Item>();
+            DataSet ds = new DataSet("Item");
+            using (SqlConnection conn = new SqlConnection(constantValues.SQLConncectionString))
+            {
+                try
+                {
+                    SqlCommand sqlComm = new SqlCommand("SelectOneItem", conn);
+                    sqlComm.CommandType = CommandType.StoredProcedure;
+
+                    SqlParameter param1 = new SqlParameter
+                    {
+                        ParameterName = "@id",
+                        Value = id,
+                        SqlDbType = SqlDbType.Int,
+                        Direction = ParameterDirection.Input
+
+                    };
+
+
+
+                    sqlComm.Parameters.Add(param1);
+
+
+
+                    SqlDataAdapter da = new SqlDataAdapter();
+                    da.SelectCommand = sqlComm;
+                    da.Fill(ds);
+
+                    foreach (DataRow row in ds.Tables[0].Rows)
+                    {
+                        int rID = ((int)row["ID"]);
+                        string rItemName = ((string)row["ItemName"]);
+                        string rLocation = ((string)row["ItemLocation"]);
+                        string rDateTime = ((string)row["ExpiryDate"]);
+                        string rOtherText = ((string)row["OtherText"]);
+                        int rQty = ((int)row["Qty"]);
+
+                        if (!row.IsNull("FileName"))
+                        {
+                            string rFileName = ((string)row["FileName"]);
+
+
+
+                            listOfItem.Add(
+                                new Item
+                                {
+                                    ID = rID,
+                                    ItemName = rItemName,
+                                    ItemLocation = rLocation,
+                                    ExpiryDate = rDateTime,
+                                    OtherText = rOtherText,
+                                    Qty = rQty,
+                                    FileName = rFileName
+                                }
+                                );
+
+                        }
+                        else
+                        {
+
+                            listOfItem.Add(
+                                new Item
+                                {
+                                    ID = rID,
+                                    ItemName = rItemName,
+                                    ItemLocation = rLocation,
+                                    ExpiryDate = rDateTime,
+                                    OtherText = rOtherText,
+                                    Qty = rQty
+
+                                }
+                                );
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+
+                }
+            }//close sql conn
+
+            var item = listOfItem.First();
+
+            return item;
+
+        }
 
     }
 }

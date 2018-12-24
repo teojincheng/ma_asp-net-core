@@ -25,8 +25,8 @@
                 <p id="pForExpiryDate">Expiry Date</p>
                 <p id="pForOtherText">Other Text</p>
                 <p id="pForQty">Qty</p>
-               <div id="div-for-image"></div>
-                <button>edit</button>
+                <div id="div-for-image"></div>
+                <a id="edit-btn" href="#" class="btn btn-primary btn-md active" role="button">Edit</a>
             </div>
            
         </div>
@@ -90,10 +90,9 @@
                     type: "GET",
                     data: { id: rowData.id },
                     success: function (result) {
-                        console.log("fetch result");
-                        console.log(result);
-                        //console.log(result.itemName);
+                        removeImage();
                         appendImage(@Url.Content("~/Attachments/")+result.fileName);
+                        $("#edit-btn").attr("href", '/Item/EditItem?id=' + result.id);
                     },
                     error: function (xhr, status, error) {
                         
@@ -110,10 +109,15 @@
             table.$('tr.selected').removeClass('selected');
         });
 
+       
+
+        }); //close document.ready
+
+
         /**
-         * 
-         * param imgSrc
-         */
+        * Add image to the div inside the modal
+        * param imgSrc content root path where the image is stored
+        */
         function appendImage(imgSrc) {
             var imgElement = document.createElement("img");
             imgElement.setAttribute('src', imgSrc);
@@ -122,7 +126,7 @@
             if (imgSrc.includes(null)) {
                 imgElement.setAttribute('alt', '');
             }
-            //imgElement.setAttribute('id', "img-id");
+            imgElement.setAttribute('id', "img-id");
 
             var imgdiv = document.getElementById("div-for-image");
             imgdiv.appendChild(imgElement);
@@ -141,8 +145,18 @@
             */
 
         }
+        /**
+         * Remove the image from DOM */
+        function removeImage() {
+            var imgElement = document.getElementById("img-id");
 
-    }); //close document.ready
+            if (imgElement != null) {
+                imgElement.parentNode.removeChild(imgElement);
+            }
+        }
+
+
+
 
 
 
