@@ -1,6 +1,8 @@
 ﻿@model ma.ViewModel.EditItemViewModel
 @{
     ViewData["Title"] = "EditItem";
+
+
 }
 
 <h2>EditItem</h2>
@@ -11,9 +13,9 @@
             <div asp-validation-summary="All" class="text-danger"></div>
 
             <div class="form-group">
-               
+
                 <input asp-for="Id" class="form-control" />
-               
+
             </div>
 
             <div class="form-group">
@@ -43,14 +45,46 @@
                 <span asp-validation-for="Qty" class="text-danger"></span>
             </div>
 
+
+            @if (Model != null && !String.IsNullOrEmpty(Model.FileName))
+            {
+                <div class="form-group">
+                    <img src="@Url.Content("~/Attachments/"+Model.FileName)" alt="item image" />
+                </div>
+            }
+
+
+
             <div class="form-group">
                 <label asp-for="AttachmentFile" class="control-label"></label>
                 <input asp-for="AttachmentFile" class="form-control" />
                 <span asp-validation-for="AttachmentFile" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-default" />
+                <input type="submit" value="Edit" class="btn btn-default" />
+                <input id="delete-btn" type="button" value="Delete" class="btn btn-default" />
             </div>
         </form>
-        </div>
     </div>
+</div>
+@section Scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("#delete-btn").click(function () {
+                $.ajax({
+                    url: '@Url.Action("DeleteOneItem", "Item")',
+                    type: "GET",
+                    data: { id: '@Model.Id' },
+                    success: function (result) {
+                        alert(result);
+
+                    },
+                    error: function (xhr, status, error) {
+
+                    }
+                });
+            });
+
+        });
+    </script>
+    }

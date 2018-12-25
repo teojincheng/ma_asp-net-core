@@ -256,15 +256,16 @@ namespace ma.Controllers
             }
 
 
-            return View();
+            //return View();
+           return RedirectToAction("AddItem");
         }
 
 
 
         public ActionResult EditItem(int id)
         {
-           Item currentItem =  GetItemFromDB(id);
-            EditItemViewModel currentItemViewModel = new EditItemViewModel { Id= currentItem.ID, Name= currentItem.ItemName, Location = currentItem.ItemLocation, Remarks = currentItem.OtherText,Qty = currentItem.Qty };
+           ItemRawDate currentItem =  ItemGetItemFromDBrawDate(id);
+           EditItemViewModel currentItemViewModel = new EditItemViewModel { Id= currentItem.ID, Name= currentItem.ItemName, Location = currentItem.ItemLocation, Remarks = currentItem.OtherText,Qty = currentItem.Qty, ExpiryDate = currentItem.ExpiryDate,FileName = currentItem.FileName};
 
             return View(currentItemViewModel);
         }
@@ -393,7 +394,7 @@ namespace ma.Controllers
         }
 
 
-        //methods to return data from ajax request from the view
+        //methods to return data from OR handle ajax request from the view
         #region
         /// <summary>
         /// query the database and return the data for one item
@@ -491,11 +492,57 @@ namespace ma.Controllers
             return Json(item);
         }
 
+        [HttpGet]
+        public string DeleteOneItem(int id)
+        {
+            var operationResult = "Delete Successful";
+
+            using (SqlConnection sqlConnection = new SqlConnection(constantValues.SQLConncectionString))
+            {
+                try
+                {
+                    using (SqlCommand cmd = new SqlCommand("DeleteOneItem", sqlConnection))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        SqlParameter param1 = new SqlParameter
+                        {
+                            ParameterName = "@id",
+                            Value = id,
+                            SqlDbType = SqlDbType.Int,
+                            Direction = ParameterDirection.Input
+
+                        };
+
+                        cmd.Parameters.Add(param1);
+
+                        sqlConnection.Open();
+                        cmd.ExecuteNonQuery();
+
+                    }
+                }
+                catch (Exception e)
+                {
+                    operationResult = "Internal Server Error";
+                    return operationResult;
+                }
+            } // end using
+
+            return operationResult;
+
+        }
+
 
         #endregion
 
+        #region Data Access Layer 
 
-        public Item GetItemFromDB(int id)
+        /// <summary>
+        /// query the db and return one Item object
+        /// </summary>
+        /// <param name="id">id of item in the database</param>
+        /// <returns>One item but date is formatted as pretty string</returns>
+        public Item GetItemFromDBDateFormatted(int id)
         {
 
             List<Item> listOfItem = new List<Item>();
@@ -585,5 +632,103 @@ namespace ma.Controllers
 
         }
 
+
+        /// <summary>
+        /// query the db and return one item object
+        /// </summary>
+        /// <param name="id">id of item in the database</param>
+        /// <returns>One item but date is raw sql date time object</returns>
+        public ItemRawDate ItemGetItemFromDBrawDate(int id)
+        {
+
+            List<ItemRawDate> listOfItem = new List<ItemRawDate>();
+            DataSet ds = new DataSet("Item");
+            using (SqlConnection conn = new SqlConnection(constantValues.SQLConncectionString))
+            {
+                try
+                {
+                    SqlCommand sqlComm = new SqlCommand("SelectOneItemRawDate", conn);
+                    sqlComm.CommandType = CommandType.StoredProcedure;
+
+                    SqlParameter param1 = new SqlParameter
+                    {
+                        ParameterName = "@id",
+                        Value = id,
+                        SqlDbType = SqlDbType.Int,
+                        Direction = ParameterDirection.Input
+
+                    };
+
+
+
+                    sqlComm.Parameters.Add(param1);
+
+
+
+                    SqlDataAdapter da = new SqlDataAdapter();
+                    da.SelectCommand = sqlComm;
+                    da.Fill(ds);
+
+                    foreach (DataRow row in ds.Tables[0].Rows)
+                    {
+                        int rID = ((int)row["ID"]);
+                        string rItemName = ((string)row["ItemName"]);
+                        string rLocation = ((string)row["ItemLocation"]);
+                        DateTime rDateTime = DateTime.Parse(row["ExpiryDate"].ToString());
+                        string rOtherText = ((string)row["OtherText"]);
+                        int rQty = ((int)row["Qty"]);
+
+                        if (!row.IsNull("FileName"))
+                        {
+                            string rFileName = ((string)row["FileName"]);
+
+
+
+                            listOfItem.Add(
+                                new ItemRawDate
+                                {
+                                    ID = rID,
+                                    ItemName = rItemName,
+                                    ItemLocation = rLocation,
+                                    ExpiryDate = rDateTime,
+                                    OtherText = rOtherText,
+                                    Qty = rQty,
+                                    FileName = rFileName
+                                }
+                                );
+
+                        }
+                        else
+                        {
+
+                            listOfItem.Add(
+                                new ItemRawDate
+                                {
+                                    ID = rID,
+                                    ItemName = rItemName,
+                                    ItemLocation = rLocation,
+                                    ExpiryDate = rDateTime,
+                                    OtherText = rOtherText,
+                                    Qty = rQty
+
+                                }
+                                );
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+
+                }
+            }//close sql conn
+
+            var item = listOfItem.First();
+
+            return item;
+
+        }
+
+
+        #endregion
     }
 }

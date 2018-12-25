@@ -32,5 +32,7 @@ namespace ma.ViewModel
         [Display(Name = "Item Picture")]
         [DataType(DataType.Upload)]
         public IFormFile AttachmentFile { get; set; }
+
+        public string FileName { get; set; }
     }
 }
