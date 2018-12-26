@@ -270,6 +270,12 @@ namespace ma.Controllers
             return View(currentItemViewModel);
         }
 
+        [HttpPost]
+        public ActionResult EditItem(EditItemViewModel viewModel)
+        {
+            return View();
+        }
+
         
 
         /// <summary>
@@ -492,10 +498,13 @@ namespace ma.Controllers
             return Json(item);
         }
 
-        [HttpGet]
+        [HttpPost]
         public string DeleteOneItem(int id)
         {
             var operationResult = "Delete Successful";
+
+            //query the database to check if there is image for this item.
+            var currentItemToDelete = GetItemFromDBDateFormatted(id);
 
             using (SqlConnection sqlConnection = new SqlConnection(constantValues.SQLConncectionString))
             {
@@ -527,6 +536,32 @@ namespace ma.Controllers
                     return operationResult;
                 }
             } // end using
+
+
+            
+            if (!string.IsNullOrEmpty(currentItemToDelete.FileName))
+            {
+                //delete the image from disk. 
+                string contentRootPath = _hostingEnvironment.ContentRootPath;
+                string fullImagePath = Path.Combine(contentRootPath + "\\Attachments", currentItemToDelete.FileName);
+
+                if (System.IO.File.Exists(fullImagePath))
+                {
+                    try
+                    {
+                        System.GC.Collect();
+                        System.GC.WaitForPendingFinalizers();
+                        //File.Delete(picturePath);
+                        System.IO.File.Delete(fullImagePath);
+                    }catch(Exception e)
+                    {
+                        operationResult = "Attachment Path. Internal Server Error";
+                    }
+                }
+
+            }
+
+
 
             return operationResult;
 

@@ -73,7 +73,7 @@
             $("#delete-btn").click(function () {
                 $.ajax({
                     url: '@Url.Action("DeleteOneItem", "Item")',
-                    type: "GET",
+                    type: "POST",
                     data: { id: '@Model.Id' },
                     success: function (result) {
                         alert(result);
