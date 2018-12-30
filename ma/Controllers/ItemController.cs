@@ -13,9 +13,11 @@ using System.Security.Claims;
 using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using System.Globalization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ma.Controllers
 {
+    [Authorize]
     public class ItemController : Controller
     {
 
@@ -52,6 +54,57 @@ namespace ma.Controllers
         public ActionResult AddItem(AddItemViewModel viewModel)
         {
             System.Globalization.CultureInfo.CurrentCulture.ClearCachedData();
+
+            List<string> validContentTypes = new List<string>
+            {
+                "image/gif",
+                "image/jpeg",
+                "image/png"
+            };
+
+
+            //begin server side validation
+
+            if (string.IsNullOrEmpty(viewModel.Name))
+            {
+                ModelState.AddModelError("Name", "Name cannot be empty");
+                return View();
+            }
+            if(viewModel.ExpiryDate == DateTime.MinValue)
+            {
+                ModelState.AddModelError("ExpiryDate", "Make sure Expiry Date is a valid date");
+                return View();
+            }
+            if (viewModel.ExpiryDate < DateTime.Now)
+            {
+                ModelState.AddModelError("ExpiryDate", "Make sure Expiry Date is later than today.");
+                return View();
+            }
+            if (viewModel.Name.Length > 255)
+            {
+                ModelState.AddModelError("Name", "Name cannot exceed 255 characters");
+                return View();
+            }
+            if(viewModel.Location.Length > 255)
+            {
+                ModelState.AddModelError("Location", "Location cannot exceed 255 characters");
+                return View();
+            }
+            if(viewModel.Qty <= 0)
+            {
+                ModelState.AddModelError("Qty", "Make sure Qty is more than 0");
+                return View();
+            }
+            if (viewModel.AttachmentFile != null)
+            {
+                if (!validContentTypes.Contains(viewModel.AttachmentFile.ContentType))
+                {
+                    ModelState.AddModelError("AttachmentFile", "Make sure image is a .gif, .jpeg or .png");
+                    return View();
+                }
+            }
+
+           
             DateTime DateNow = DateTime.UtcNow;
             //get user id from asp.net identity. 
             var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -545,6 +598,9 @@ namespace ma.Controllers
         [HttpPost]
         public ActionResult ItemsTableProcessing(DataTablesAjaxPostModel model)
         {
+
+            var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             string search = "";
             string sortBy = "";
             string sortDirection = "";
@@ -604,9 +660,19 @@ namespace ma.Controllers
                         Direction = ParameterDirection.Input
 
                     };
+
+                    SqlParameter param4 = new SqlParameter
+                    {
+                        ParameterName = "@userid",
+                        Value = userId,
+                        SqlDbType = SqlDbType.NVarChar,
+                        Direction = ParameterDirection.Input
+
+                    };
                     sqlComm.Parameters.Add(param1);
                     sqlComm.Parameters.Add(param2);
                     sqlComm.Parameters.Add(param3);
+                    sqlComm.Parameters.Add(param4);
 
 
                     SqlDataAdapter da = new SqlDataAdapter();
