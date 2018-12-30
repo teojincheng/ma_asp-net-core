@@ -14,6 +14,7 @@ using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
+using System.Text.Encodings.Web;
 
 namespace ma.Controllers
 {
@@ -23,10 +24,18 @@ namespace ma.Controllers
 
         Constants constantValues = new Constants();
         private readonly IHostingEnvironment _hostingEnvironment;
+        HtmlEncoder _htmlEncoder;
+        JavaScriptEncoder _javaScriptEncoder;
+        UrlEncoder _urlEncoder;
 
-        public ItemController(IHostingEnvironment hostingEnvironment)
+        public ItemController(IHostingEnvironment hostingEnvironment, HtmlEncoder htmlEncoder,
+                             JavaScriptEncoder javascriptEncoder,
+                             UrlEncoder urlEncoder)
         {
             _hostingEnvironment = hostingEnvironment;
+            _htmlEncoder = htmlEncoder;
+            _javaScriptEncoder = javascriptEncoder;
+            _urlEncoder = urlEncoder;
         }
 
         public IActionResult Index()
@@ -682,10 +691,10 @@ namespace ma.Controllers
                     foreach (DataRow row in ds.Tables[0].Rows)
                     {
                         int rID = ((int)row["ID"]);
-                        string rItemName = ((string)row["ItemName"]);
-                        string rLocation = ((string)row["ItemLocation"]);
-                        string rDateTime = ((string)row["ExpiryDate"]);
-                        string rOtherText = ((string)row["OtherText"]);
+                        string rItemName = _htmlEncoder.Encode((string)row["ItemName"]);
+                        string rLocation = _htmlEncoder.Encode((string)row["ItemLocation"]);
+                        string rDateTime = _htmlEncoder.Encode((string)row["ExpiryDate"]);
+                        string rOtherText = _htmlEncoder.Encode((string)row["OtherText"]);
 
                         listOfItem.Add(
                             new Item
