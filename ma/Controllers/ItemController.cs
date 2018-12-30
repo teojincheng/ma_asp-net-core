@@ -273,7 +273,266 @@ namespace ma.Controllers
         [HttpPost]
         public ActionResult EditItem(EditItemViewModel viewModel)
         {
-            return View();
+            //update the details of item other than attachment inside db. 
+            using (SqlConnection sqlConnection = new SqlConnection(constantValues.SQLConncectionString))
+            {
+                try
+                {
+                    using (SqlCommand cmd = new SqlCommand("UpdateItem", sqlConnection))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+
+
+                        SqlParameter param1 = new SqlParameter
+                        {
+                            ParameterName = "@itemName",
+                            Value = viewModel.Name,
+                            SqlDbType = SqlDbType.NVarChar,
+                            Direction = ParameterDirection.Input
+
+                        };
+
+
+                        SqlParameter param2 = new SqlParameter
+                        {
+                            ParameterName = "@itemLocation",
+                            Value = viewModel.Location,
+                            SqlDbType = SqlDbType.NVarChar,
+                            Direction = ParameterDirection.Input
+
+                        };
+
+                        SqlParameter param3 = new SqlParameter
+                        {
+                            ParameterName = "@expiryDate",
+                            Value = viewModel.ExpiryDate,
+                            SqlDbType = SqlDbType.DateTime,
+                            Direction = ParameterDirection.Input
+
+                        };
+
+                        SqlParameter param4 = new SqlParameter
+                        {
+                            ParameterName = "@otherText",
+                            Value = viewModel.Remarks,
+                            SqlDbType = SqlDbType.NVarChar,
+                            Direction = ParameterDirection.Input
+
+                        };
+
+                        SqlParameter param5 = new SqlParameter
+                        {
+                            ParameterName = "@qty",
+                            Value = viewModel.Qty,
+                            SqlDbType = SqlDbType.Int,
+                            Direction = ParameterDirection.Input
+
+                        };
+
+                        SqlParameter param6 = new SqlParameter
+                        {
+                            ParameterName = "@id",
+                            Value = viewModel.Id,
+                            SqlDbType = SqlDbType.NVarChar,
+                            Direction = ParameterDirection.Input
+
+                        };
+
+               
+
+
+
+                        cmd.Parameters.Add(param1);
+                        cmd.Parameters.Add(param2);
+                        cmd.Parameters.Add(param3);
+                        cmd.Parameters.Add(param4);
+                        cmd.Parameters.Add(param5);
+                        cmd.Parameters.Add(param6);
+         
+
+                        sqlConnection.Open();
+                        //so that it return a output value.
+                        cmd.ExecuteNonQuery();
+                       
+
+
+                    }
+                }
+                catch (Exception e)
+                {
+
+                }
+            } // end using
+
+
+            var currentItemToDelete = GetItemFromDBDateFormatted(viewModel.Id);
+            //delete the previous image from db
+
+            using (SqlConnection sqlConnection = new SqlConnection(constantValues.SQLConncectionString))
+            {
+                try
+                {
+                    using (SqlCommand cmd = new SqlCommand("DeleteAttachmentItemId", sqlConnection))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        SqlParameter param1 = new SqlParameter
+                        {
+                            ParameterName = "@itemid",
+                            Value = viewModel.Id,
+                            SqlDbType = SqlDbType.Int,
+                            Direction = ParameterDirection.Input
+
+                        };
+
+                        cmd.Parameters.Add(param1);
+
+                        sqlConnection.Open();
+                        cmd.ExecuteNonQuery();
+
+                    }
+                }
+                catch (Exception e)
+                {
+
+                }
+            }
+
+
+                //delete the previous image from disk
+
+
+                if (!string.IsNullOrEmpty(currentItemToDelete.FileName))
+                {
+                //delete the image from disk. 
+                string contentRootPath = _hostingEnvironment.ContentRootPath;
+                string fullImagePath = Path.Combine(contentRootPath + "\\Attachments", currentItemToDelete.FileName);
+
+                if (System.IO.File.Exists(fullImagePath))
+                {
+                    try
+                    {
+                        System.GC.Collect();
+                        System.GC.WaitForPendingFinalizers();
+                        //File.Delete(picturePath);
+                        System.IO.File.Delete(fullImagePath);
+                    }
+                    catch (Exception e)
+                    {
+                       
+                    }
+                }
+
+            }
+
+
+
+            //add the image to disk
+
+            var friendlyFileName = "";
+            var storageFileName = "";
+            var filePathToSave = "";
+            // if there is attachment for the form submission. 
+            if (viewModel.AttachmentFile != null)
+            {
+                //store image info folder that is part of project but outside wwwroot. 
+                try
+                {
+                    friendlyFileName = Path.GetFileName(viewModel.AttachmentFile.FileName);
+                    storageFileName = "";
+                    filePathToSave = "";
+
+                    //.net core of server.map path
+                    string contentRootPath = _hostingEnvironment.ContentRootPath;
+
+                    var filenameWithoutExt = Path.GetFileNameWithoutExtension(viewModel.AttachmentFile.FileName);
+                    var fileExt = Path.GetExtension(viewModel.AttachmentFile.FileName);
+                    storageFileName = filenameWithoutExt + "-" + Guid.NewGuid().ToString() + "-" + fileExt;
+
+                    filePathToSave = Path.Combine(contentRootPath + "\\Attachments", storageFileName);
+                    viewModel.AttachmentFile.CopyTo(new FileStream(filePathToSave, FileMode.Create));
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
+
+            //add image to db. 
+
+
+            using (SqlConnection sqlConnection = new SqlConnection(constantValues.SQLConncectionString))
+            {
+                try
+                {
+                    using (SqlCommand cmd = new SqlCommand("InsertIntoAttachment", sqlConnection))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+
+
+                        SqlParameter param1 = new SqlParameter
+                        {
+                            ParameterName = "@filename",
+                            Value = storageFileName,
+                            SqlDbType = SqlDbType.NVarChar,
+                            Direction = ParameterDirection.Input
+
+                        };
+
+
+                        SqlParameter param2 = new SqlParameter
+                        {
+                            ParameterName = "@friendlyfilename",
+                            Value = friendlyFileName,
+                            SqlDbType = SqlDbType.NVarChar,
+                            Direction = ParameterDirection.Input
+
+                        };
+
+                        SqlParameter param3 = new SqlParameter
+                        {
+                            ParameterName = "@filepath",
+                            Value = filePathToSave,
+                            SqlDbType = SqlDbType.NVarChar,
+                            Direction = ParameterDirection.Input
+
+                        };
+
+                        SqlParameter param4 = new SqlParameter
+                        {
+                            ParameterName = "@itemid",
+                            Value = viewModel.Id,
+                            SqlDbType = SqlDbType.Int,
+                            Direction = ParameterDirection.Input
+
+                        };
+
+
+
+
+
+                        cmd.Parameters.Add(param1);
+                        cmd.Parameters.Add(param2);
+                        cmd.Parameters.Add(param3);
+                        cmd.Parameters.Add(param4);
+
+
+                        sqlConnection.Open();
+                        cmd.ExecuteNonQuery();
+
+                    }
+                }
+                catch (Exception e)
+                {
+
+                }
+            } // end using
+
+
+
+            return RedirectToAction("EditItem", new { id = viewModel.Id });
         }
 
         
