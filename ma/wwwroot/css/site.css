@@ -35,3 +35,9 @@ body {
         display: none;
     }
 }
+
+/*when hover over datatables, make mouse go to pointer */
+
+#itemsTable tbody tr {
+    cursor: pointer;
+}

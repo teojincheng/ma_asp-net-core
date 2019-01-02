@@ -93,6 +93,13 @@
                         removeImage();
                         appendImage(@Url.Content("~/Attachments/")+result.fileName);
                         $("#edit-btn").attr("href", '/Item/EditItem?id=' + result.id);
+                        $("#ModalLabel").text(result.itemName);
+                        $("#pForItemName").text("Item Name: "+result.itemName);
+                        $("#pForItemLocation").text("Item Location: "+result.itemLocation);
+                        $("#pForExpiryDate").text("Expiry Date: "+result.expiryDate);
+                        $("#pForOtherText").text("Other Text: "+result.otherText);
+                        $("#pForQty").text("Qty: "+result.qty);
+
                     },
                     error: function (xhr, status, error) {
                         

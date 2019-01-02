@@ -46,12 +46,7 @@
             </div>
 
 
-            @if (Model != null && !String.IsNullOrEmpty(Model.FileName))
-            {
-                <div class="form-group">
-                    <img src="@Url.Content("~/Attachments/"+Model.FileName)" alt="item image" />
-                </div>
-            }
+            <div id="div-for-image"></div>
 
 
 
@@ -69,6 +64,47 @@
 </div>
 @section Scripts {
     <script type="text/javascript">
+        /**
+ * Add image to the div inside the modal
+ * param imgSrc content root path where the image is stored
+ */
+        function appendImage(imgSrc) {
+            var imgElement = document.createElement("img");
+            imgElement.setAttribute('src', imgSrc);
+            //imgElement.setAttribute('class', "img-fill-parent");
+
+            if (imgSrc.includes(null)) {
+                imgElement.setAttribute('alt', '');
+            }
+            imgElement.setAttribute('id', "img-id");
+
+            var imgdiv = document.getElementById("div-for-image");
+            imgdiv.appendChild(imgElement);
+
+
+            /*
+            if (!imgSrc.includes(null)) {
+                var btnElement = document.createElement("input");
+                btnElement.setAttribute("id", "delete-img-btn");
+                btnElement.setAttribute("onclick", "delImgFunction()");
+                btnElement.type = "button";
+                btnElement.value = "Delete";
+
+                imgdiv.appendChild(btnElement);
+            }
+            */
+
+        }
+        /**
+         * Remove the image from DOM */
+        function removeImage() {
+            var imgElement = document.getElementById("img-id");
+
+            if (imgElement != null) {
+                imgElement.parentNode.removeChild(imgElement);
+            }
+        }
+
         $(document).ready(function () {
             $("#delete-btn").click(function () {
                 $.ajax({
@@ -84,6 +120,24 @@
                     }
                 });
             });
+
+
+                $.ajax({
+                    url:'@Url.Action("GetDataForOneItem", "Item")',
+                    type: "GET",
+                    data: { id: @Model.Id },
+                    success: function (result) {
+                        removeImage();
+                        appendImage(@Url.Content("~/Attachments/")+result.fileName);
+                     
+                    },
+                    error: function (xhr, status, error) {
+                        
+                    }
+            });
+
+
+
 
         });
     </script>

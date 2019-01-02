@@ -64,6 +64,9 @@ namespace ma.Controllers
         {
             System.Globalization.CultureInfo.CurrentCulture.ClearCachedData();
 
+            //3MB
+            var fileAttachmentLimit = 3145728;
+
             List<string> validContentTypes = new List<string>
             {
                 "image/gif",
@@ -109,6 +112,13 @@ namespace ma.Controllers
                 if (!validContentTypes.Contains(viewModel.AttachmentFile.ContentType))
                 {
                     ModelState.AddModelError("AttachmentFile", "Make sure image is a .gif, .jpeg or .png");
+                    return View();
+                }
+                //check file size
+
+                if(viewModel.AttachmentFile.Length > fileAttachmentLimit)
+                {
+                    ModelState.AddModelError("AttachmentFile", "Make sure image is less than 3MB in size");
                     return View();
                 }
             }
@@ -327,7 +337,7 @@ namespace ma.Controllers
         public ActionResult EditItem(int id)
         {
            ItemRawDate currentItem =  ItemGetItemFromDBrawDate(id);
-           EditItemViewModel currentItemViewModel = new EditItemViewModel { Id= currentItem.ID, Name= currentItem.ItemName, Location = currentItem.ItemLocation, Remarks = currentItem.OtherText,Qty = currentItem.Qty, ExpiryDate = currentItem.ExpiryDate,FileName = currentItem.FileName};
+           EditItemViewModel currentItemViewModel = new EditItemViewModel { Id= currentItem.ID, Name= _htmlEncoder.Encode(currentItem.ItemName), Location = _htmlEncoder.Encode(currentItem.ItemLocation), Remarks = _htmlEncoder.Encode(currentItem.OtherText),Qty = currentItem.Qty, ExpiryDate = currentItem.ExpiryDate,FileName = currentItem.FileName};
 
             return View(currentItemViewModel);
         }
@@ -335,6 +345,65 @@ namespace ma.Controllers
         [HttpPost]
         public ActionResult EditItem(EditItemViewModel viewModel)
         {
+            var fileAttachmentLimit = 3145728;
+
+            List<string> validContentTypes = new List<string>
+            {
+                "image/gif",
+                "image/jpeg",
+                "image/png"
+            };
+
+
+            //begin server side validation
+
+            if (string.IsNullOrEmpty(viewModel.Name))
+            {
+                ModelState.AddModelError("Name", "Name cannot be empty");
+                return View(viewModel);
+            }
+            if (viewModel.ExpiryDate == DateTime.MinValue)
+            {
+                ModelState.AddModelError("ExpiryDate", "Make sure Expiry Date is a valid date");
+                return View(viewModel);
+            }
+            if (viewModel.ExpiryDate < DateTime.Now)
+            {
+                ModelState.AddModelError("ExpiryDate", "Make sure Expiry Date is later than today.");
+                return View(viewModel);
+            }
+            if (viewModel.Name.Length > 255)
+            {
+                ModelState.AddModelError("Name", "Name cannot exceed 255 characters");
+                return View(viewModel);
+            }
+            if (viewModel.Location.Length > 255)
+            {
+                ModelState.AddModelError("Location", "Location cannot exceed 255 characters");
+                return View(viewModel);
+            }
+            if (viewModel.Qty <= 0)
+            {
+                ModelState.AddModelError("Qty", "Make sure Qty is more than 0");
+                return View(viewModel);
+            }
+            if (viewModel.AttachmentFile != null)
+            {
+                if (!validContentTypes.Contains(viewModel.AttachmentFile.ContentType))
+                {
+                    ModelState.AddModelError("AttachmentFile", "Make sure image is a .gif, .jpeg or .png");
+                    return View(viewModel);
+                }
+                //check file size
+
+                if (viewModel.AttachmentFile.Length > fileAttachmentLimit)
+                {
+                    ModelState.AddModelError("AttachmentFile", "Make sure image is less than 3MB in size");
+                    return View(viewModel);
+                }
+            }
+
+
             //update the details of item other than attachment inside db. 
             using (SqlConnection sqlConnection = new SqlConnection(constantValues.SQLConncectionString))
             {
