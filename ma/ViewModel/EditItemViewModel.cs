@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -34,5 +35,10 @@ namespace ma.ViewModel
         public IFormFile AttachmentFile { get; set; }
 
         public string FileName { get; set; }
+        //used to generate the number of reminder dates the user want to set for one item. 
+        public List<SelectListItem> NumOfDates { set; get; }
+        public int SelectNum { set; get; }
+
+        public List<ReminderDateViewModel> listOfReminder { get; set; }
     }
 }

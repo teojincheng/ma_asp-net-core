@@ -61,6 +61,15 @@
             </div>
         </form>
     </div>
+    <div class="col-md-4">
+        <p>Reminder Dates</p>
+        <form asp-action="SelectReminderDays">
+            <select asp-for="SelectNum" asp-items="@Model.NumOfDates">
+                <option>Select one number</option>
+            </select>
+            <input type="submit" value="Set" class="btn btn-default" />
+            </form>
+    </div>
 </div>
 @section Scripts {
     <script type="text/javascript">

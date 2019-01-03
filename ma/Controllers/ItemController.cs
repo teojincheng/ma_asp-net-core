@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Hosting;
 using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace ma.Controllers
 {
@@ -54,7 +55,7 @@ namespace ma.Controllers
             {
                 ViewBag.AddResult = TempData["addResult"].ToString();
             }
-                return View();
+            return View();
         }
 
         /// <summary>
@@ -90,7 +91,7 @@ namespace ma.Controllers
                 ModelState.AddModelError("Name", "Name cannot be empty");
                 return View();
             }
-            if(viewModel.ExpiryDate == DateTime.MinValue)
+            if (viewModel.ExpiryDate == DateTime.MinValue)
             {
                 ModelState.AddModelError("ExpiryDate", "Make sure Expiry Date is a valid date");
                 return View();
@@ -105,12 +106,12 @@ namespace ma.Controllers
                 ModelState.AddModelError("Name", "Name cannot exceed 255 characters");
                 return View();
             }
-            if(viewModel.Location.Length > 255)
+            if (viewModel.Location.Length > 255)
             {
                 ModelState.AddModelError("Location", "Location cannot exceed 255 characters");
                 return View();
             }
-            if(viewModel.Qty <= 0)
+            if (viewModel.Qty <= 0)
             {
                 ModelState.AddModelError("Qty", "Make sure Qty is more than 0");
                 return View();
@@ -124,14 +125,14 @@ namespace ma.Controllers
                 }
                 //check file size
 
-                if(viewModel.AttachmentFile.Length > fileAttachmentLimit)
+                if (viewModel.AttachmentFile.Length > fileAttachmentLimit)
                 {
                     ModelState.AddModelError("AttachmentFile", "Make sure image is less than 3MB in size");
                     return View();
                 }
             }
 
-           
+
             DateTime DateNow = DateTime.UtcNow;
             //get user id from asp.net identity. 
             var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -147,7 +148,7 @@ namespace ma.Controllers
 
 
 
-                     SqlParameter param1 =   new SqlParameter
+                        SqlParameter param1 = new SqlParameter
                         {
                             ParameterName = "@itemname",
                             Value = viewModel.Name,
@@ -157,7 +158,8 @@ namespace ma.Controllers
                         };
 
 
-                      SqlParameter param2 =  new SqlParameter {
+                        SqlParameter param2 = new SqlParameter
+                        {
                             ParameterName = "@itemlocation",
                             Value = viewModel.Location,
                             SqlDbType = SqlDbType.NVarChar,
@@ -165,7 +167,7 @@ namespace ma.Controllers
 
                         };
 
-                       SqlParameter param3= new SqlParameter
+                        SqlParameter param3 = new SqlParameter
                         {
                             ParameterName = "@expirydate",
                             Value = viewModel.ExpiryDate,
@@ -224,7 +226,7 @@ namespace ma.Controllers
                         cmd.ExecuteScalar();
                         newItemTableId = (int)cmd.Parameters["@newRecordId"].Value;
 
-                        
+
                     }
                 }
                 catch (Exception e)
@@ -256,7 +258,8 @@ namespace ma.Controllers
 
                     filePathToSave = Path.Combine(contentRootPath + "\\Attachments", storageFileName);
                     viewModel.AttachmentFile.CopyTo(new FileStream(filePathToSave, FileMode.Create));
-                }catch(Exception ex)
+                }
+                catch (Exception ex)
                 {
                     operationResult = "Internal Server Error";
                 }
@@ -310,7 +313,7 @@ namespace ma.Controllers
 
                             };
 
-                            
+
 
 
 
@@ -318,7 +321,7 @@ namespace ma.Controllers
                             cmd.Parameters.Add(param2);
                             cmd.Parameters.Add(param3);
                             cmd.Parameters.Add(param4);
-                         
+
 
                             sqlConnection.Open();
                             cmd.ExecuteNonQuery();
@@ -337,16 +340,23 @@ namespace ma.Controllers
 
 
             //return View();
-           TempData["addResult"] = operationResult;
-           return RedirectToAction("AddItem");
+            TempData["addResult"] = operationResult;
+            return RedirectToAction("AddItem");
         }
 
 
 
         public ActionResult EditItem(int id)
         {
-           ItemRawDate currentItem =  ItemGetItemFromDBrawDate(id);
-           EditItemViewModel currentItemViewModel = new EditItemViewModel { Id= currentItem.ID, Name= _htmlEncoder.Encode(currentItem.ItemName), Location = _htmlEncoder.Encode(currentItem.ItemLocation), Remarks = _htmlEncoder.Encode(currentItem.OtherText),Qty = currentItem.Qty, ExpiryDate = currentItem.ExpiryDate,FileName = currentItem.FileName};
+            ItemRawDate currentItem = ItemGetItemFromDBrawDate(id);
+            EditItemViewModel currentItemViewModel = new EditItemViewModel { Id = currentItem.ID, Name = _htmlEncoder.Encode(currentItem.ItemName), Location = _htmlEncoder.Encode(currentItem.ItemLocation), Remarks = _htmlEncoder.Encode(currentItem.OtherText), Qty = currentItem.Qty, ExpiryDate = currentItem.ExpiryDate, FileName = currentItem.FileName };
+
+            currentItemViewModel.NumOfDates = new List<SelectListItem>
+            {
+                  new SelectListItem {Value = "1", Text = "1"},
+                  new SelectListItem {Value = "2", Text = "2"},
+                  new SelectListItem {Value = "3", Text = "3"}
+            };
 
             if (TempData.ContainsKey("editResult"))
             {
@@ -488,7 +498,7 @@ namespace ma.Controllers
 
                         };
 
-               
+
 
 
 
@@ -498,12 +508,12 @@ namespace ma.Controllers
                         cmd.Parameters.Add(param4);
                         cmd.Parameters.Add(param5);
                         cmd.Parameters.Add(param6);
-         
+
 
                         sqlConnection.Open();
                         //so that it return a output value.
                         cmd.ExecuteNonQuery();
-                       
+
 
 
                     }
@@ -549,11 +559,11 @@ namespace ma.Controllers
             }
 
 
-                //delete the previous image from disk
+            //delete the previous image from disk
 
 
-                if (!string.IsNullOrEmpty(currentItemToDelete.FileName))
-                {
+            if (!string.IsNullOrEmpty(currentItemToDelete.FileName))
+            {
                 //delete the image from disk. 
                 string contentRootPath = _hostingEnvironment.ContentRootPath;
                 string fullImagePath = Path.Combine(contentRootPath + "\\Attachments", currentItemToDelete.FileName);
@@ -684,7 +694,7 @@ namespace ma.Controllers
             return RedirectToAction("EditItem", new { id = viewModel.Id });
         }
 
-        
+
 
         /// <summary>
         /// make sense of what the user wants to search/sort with datatables
@@ -704,8 +714,8 @@ namespace ma.Controllers
             {
                 search = model.search.value;
             }
-          
-            if(model.columns.Count > 0)
+
+            if (model.columns.Count > 0)
             {
                 sortBy = model.columns[model.order[0].column].data;
             }
@@ -718,7 +728,7 @@ namespace ma.Controllers
             /*
              * sortby value default is id
              * sortdirection value default is asc
-             */ 
+             */
             var listOfItem = new List<Item>();
 
             DataSet ds = new DataSet("Items");
@@ -795,7 +805,7 @@ namespace ma.Controllers
                             );
                     }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
 
                 }
@@ -852,9 +862,9 @@ namespace ma.Controllers
                     };
 
 
-          
+
                     sqlComm.Parameters.Add(param1);
-                    
+
 
 
                     SqlDataAdapter da = new SqlDataAdapter();
@@ -870,8 +880,8 @@ namespace ma.Controllers
                         string rOtherText = ((string)row["OtherText"]);
                         int rQty = ((int)row["Qty"]);
 
-                         if (!row.IsNull("FileName"))
-                            {
+                        if (!row.IsNull("FileName"))
+                        {
                             string rFileName = ((string)row["FileName"]);
 
 
@@ -902,7 +912,7 @@ namespace ma.Controllers
                                     ExpiryDate = rDateTime,
                                     OtherText = rOtherText,
                                     Qty = rQty
-                                   
+
                                 }
                                 );
                         }
@@ -959,7 +969,7 @@ namespace ma.Controllers
             } // end using
 
 
-            
+
             if (!string.IsNullOrEmpty(currentItemToDelete.FileName))
             {
                 //delete the image from disk. 
@@ -974,7 +984,8 @@ namespace ma.Controllers
                         System.GC.WaitForPendingFinalizers();
                         //File.Delete(picturePath);
                         System.IO.File.Delete(fullImagePath);
-                    }catch(Exception e)
+                    }
+                    catch (Exception e)
                     {
                         operationResult = "Attachment Path. Internal Server Error";
                     }
@@ -986,6 +997,19 @@ namespace ma.Controllers
 
             return operationResult;
 
+        }
+        /// <summary>
+        /// At the edit item page, process the form where user select how many reminder dates he wants to set
+        /// </summary>
+        /// <param name="viewModel">contain data on the number of dates</param>
+        [HttpPost]
+        public void SelectReminderDays(EditItemViewModel viewModel)
+        {
+            List<ReminderDateViewModel> listOfReminderDate = new List<ReminderDateViewModel>();
+            for (int i = 0; i < viewModel.SelectNum; i++)
+            {
+                listOfReminderDate.Add(new ReminderDateViewModel());
+            }
         }
 
 
