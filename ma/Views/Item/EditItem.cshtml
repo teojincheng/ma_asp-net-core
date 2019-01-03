@@ -106,13 +106,21 @@
         }
 
         $(document).ready(function () {
+
+             var editItemResult = '@ViewBag.EditResult';
+           if (editItemResult.length > 0) {
+            swal(editItemResult);
+        }
+
+
             $("#delete-btn").click(function () {
                 $.ajax({
                     url: '@Url.Action("DeleteOneItem", "Item")',
                     type: "POST",
                     data: { id: '@Model.Id' },
                     success: function (result) {
-                        alert(result);
+                        swal(result);
+                        setTimeout(function () { location.href="@Url.Action("Index","Item")" }, 1000);
 
                     },
                     error: function (xhr, status, error) {
@@ -129,10 +137,10 @@
                     success: function (result) {
                         removeImage();
                         appendImage(@Url.Content("~/Attachments/")+result.fileName);
-                     
+
                     },
                     error: function (xhr, status, error) {
-                        
+
                     }
             });
 
@@ -141,4 +149,4 @@
 
         });
     </script>
-    }
+}

@@ -49,7 +49,12 @@ namespace ma.Controllers
         /// <returns></returns>
         public ActionResult AddItem()
         {
-            return View();
+
+            if (TempData.ContainsKey("addResult"))
+            {
+                ViewBag.AddResult = TempData["addResult"].ToString();
+            }
+                return View();
         }
 
         /// <summary>
@@ -62,6 +67,9 @@ namespace ma.Controllers
         [HttpPost]
         public ActionResult AddItem(AddItemViewModel viewModel)
         {
+
+            var operationResult = "Success";
+
             System.Globalization.CultureInfo.CurrentCulture.ClearCachedData();
 
             //3MB
@@ -221,7 +229,7 @@ namespace ma.Controllers
                 }
                 catch (Exception e)
                 {
-
+                    operationResult = "Internal Server Error";
                 }
             } // end using
 
@@ -250,7 +258,7 @@ namespace ma.Controllers
                     viewModel.AttachmentFile.CopyTo(new FileStream(filePathToSave, FileMode.Create));
                 }catch(Exception ex)
                 {
-
+                    operationResult = "Internal Server Error";
                 }
 
                 //save details of attachement into attachment database table. 
@@ -319,7 +327,7 @@ namespace ma.Controllers
                     }
                     catch (Exception e)
                     {
-
+                        operationResult = "Internal Server Error";
                     }
                 } // end using
 
@@ -329,6 +337,7 @@ namespace ma.Controllers
 
 
             //return View();
+           TempData["addResult"] = operationResult;
            return RedirectToAction("AddItem");
         }
 
@@ -339,12 +348,21 @@ namespace ma.Controllers
            ItemRawDate currentItem =  ItemGetItemFromDBrawDate(id);
            EditItemViewModel currentItemViewModel = new EditItemViewModel { Id= currentItem.ID, Name= _htmlEncoder.Encode(currentItem.ItemName), Location = _htmlEncoder.Encode(currentItem.ItemLocation), Remarks = _htmlEncoder.Encode(currentItem.OtherText),Qty = currentItem.Qty, ExpiryDate = currentItem.ExpiryDate,FileName = currentItem.FileName};
 
+            if (TempData.ContainsKey("editResult"))
+            {
+                ViewBag.EditResult = TempData["editResult"].ToString();
+            }
+
+
             return View(currentItemViewModel);
         }
 
         [HttpPost]
         public ActionResult EditItem(EditItemViewModel viewModel)
         {
+
+            var operationResult = "Success";
+
             var fileAttachmentLimit = 3145728;
 
             List<string> validContentTypes = new List<string>
@@ -492,7 +510,7 @@ namespace ma.Controllers
                 }
                 catch (Exception e)
                 {
-
+                    operationResult = "Internal Server Error";
                 }
             } // end using
 
@@ -526,7 +544,7 @@ namespace ma.Controllers
                 }
                 catch (Exception e)
                 {
-
+                    operationResult = "Internal Server Error";
                 }
             }
 
@@ -551,7 +569,7 @@ namespace ma.Controllers
                     }
                     catch (Exception e)
                     {
-                       
+                        operationResult = "Internal Server Error";
                     }
                 }
 
@@ -586,7 +604,7 @@ namespace ma.Controllers
                 }
                 catch (Exception ex)
                 {
-
+                    operationResult = "Internal Server Error";
                 }
             }
 
@@ -657,12 +675,12 @@ namespace ma.Controllers
                 }
                 catch (Exception e)
                 {
-
+                    operationResult = "Internal Server Error";
                 }
             } // end using
 
 
-
+            TempData["editResult"] = operationResult;
             return RedirectToAction("EditItem", new { id = viewModel.Id });
         }
 
@@ -904,7 +922,7 @@ namespace ma.Controllers
         [HttpPost]
         public string DeleteOneItem(int id)
         {
-            var operationResult = "Delete Successful";
+            var operationResult = "Success";
 
             //query the database to check if there is image for this item.
             var currentItemToDelete = GetItemFromDBDateFormatted(id);
