@@ -1011,7 +1011,7 @@ namespace ma.Controllers
                 listOfReminderDate.Add(new ReminderDateViewModel());
             }
 
-            return PartialView("ListReminderParital", listOfReminderDate);
+            return PartialView("ListReminderPartial", listOfReminderDate);
         }
 
 

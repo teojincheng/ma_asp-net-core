@@ -131,10 +131,10 @@
                 $.ajax({
                     method: "POST",
                     url: '@Url.Action("SelectReminderDays", "Item")',
-                    dataType: "json",
+                    //dataType: "json",
                     data: $('#formNumDates').serialize(),
                      success: function (result) {
-                       
+                         $("#reminder-div").html(result);
 
                     },
                     error: function (xhr, status, error) {
