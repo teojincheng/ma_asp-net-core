@@ -1003,13 +1003,15 @@ namespace ma.Controllers
         /// </summary>
         /// <param name="viewModel">contain data on the number of dates</param>
         [HttpPost]
-        public void SelectReminderDays(EditItemViewModel viewModel)
+        public ActionResult SelectReminderDays(EditItemViewModel viewModel)
         {
             List<ReminderDateViewModel> listOfReminderDate = new List<ReminderDateViewModel>();
             for (int i = 0; i < viewModel.SelectNum; i++)
             {
                 listOfReminderDate.Add(new ReminderDateViewModel());
             }
+
+            return PartialView("ListReminderParital", listOfReminderDate);
         }
 
 

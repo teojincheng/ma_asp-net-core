@@ -38,7 +38,5 @@ namespace ma.ViewModel
         //used to generate the number of reminder dates the user want to set for one item. 
         public List<SelectListItem> NumOfDates { set; get; }
         public int SelectNum { set; get; }
-
-        public List<ReminderDateViewModel> listOfReminder { get; set; }
     }
 }
