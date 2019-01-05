@@ -348,7 +348,15 @@ namespace ma.Controllers
 
         public ActionResult EditItem(int id)
         {
+            var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             ItemRawDate currentItem = ItemGetItemFromDBrawDate(id);
+
+            if(currentItem.UserId != userId)
+            {
+                return RedirectToAction("Index");
+            }
+
             EditItemViewModel currentItemViewModel = new EditItemViewModel { Id = currentItem.ID, Name = _htmlEncoder.Encode(currentItem.ItemName), Location = _htmlEncoder.Encode(currentItem.ItemLocation), Remarks = _htmlEncoder.Encode(currentItem.OtherText), Qty = currentItem.Qty, ExpiryDate = currentItem.ExpiryDate, FileName = currentItem.FileName };
 
             currentItemViewModel.NumOfDates = new List<SelectListItem>
@@ -1014,6 +1022,12 @@ namespace ma.Controllers
             return PartialView("ListReminderPartial", listOfReminderDate);
         }
 
+        [HttpPost]
+        public void SaveReminderDays(IList<ReminderDateViewModel> viewModel)
+        {
+
+        }
+
 
         #endregion
 
@@ -1159,6 +1173,7 @@ namespace ma.Controllers
                         DateTime rDateTime = DateTime.Parse(row["ExpiryDate"].ToString());
                         string rOtherText = ((string)row["OtherText"]);
                         int rQty = ((int)row["Qty"]);
+                        string rUserId = ((string)row["UserId"]);
 
                         if (!row.IsNull("FileName"))
                         {
@@ -1175,7 +1190,8 @@ namespace ma.Controllers
                                     ExpiryDate = rDateTime,
                                     OtherText = rOtherText,
                                     Qty = rQty,
-                                    FileName = rFileName
+                                    FileName = rFileName,
+                                    UserId = rUserId
                                 }
                                 );
 
@@ -1191,7 +1207,8 @@ namespace ma.Controllers
                                     ItemLocation = rLocation,
                                     ExpiryDate = rDateTime,
                                     OtherText = rOtherText,
-                                    Qty = rQty
+                                    Qty = rQty,
+                                    UserId = rUserId
 
                                 }
                                 );
