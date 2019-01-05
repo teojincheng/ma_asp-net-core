@@ -66,6 +66,7 @@ namespace ma.Controllers
         /// <param name="viewModel">data filled inside the form</param>
         /// <returns></returns>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult AddItem(AddItemViewModel viewModel)
         {
 
@@ -376,6 +377,7 @@ namespace ma.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult EditItem(EditItemViewModel viewModel)
         {
 
@@ -624,80 +626,80 @@ namespace ma.Controllers
                 {
                     operationResult = "Internal Server Error";
                 }
-            }
-
-            //add image to db. 
 
 
-            using (SqlConnection sqlConnection = new SqlConnection(constantValues.SQLConncectionString))
-            {
-                try
+                //add image to db. 
+
+
+                using (SqlConnection sqlConnection = new SqlConnection(constantValues.SQLConncectionString))
                 {
-                    using (SqlCommand cmd = new SqlCommand("InsertIntoAttachment", sqlConnection))
+                    try
                     {
-                        cmd.CommandType = CommandType.StoredProcedure;
-
-
-
-                        SqlParameter param1 = new SqlParameter
+                        using (SqlCommand cmd = new SqlCommand("InsertIntoAttachment", sqlConnection))
                         {
-                            ParameterName = "@filename",
-                            Value = storageFileName,
-                            SqlDbType = SqlDbType.NVarChar,
-                            Direction = ParameterDirection.Input
-
-                        };
-
-
-                        SqlParameter param2 = new SqlParameter
-                        {
-                            ParameterName = "@friendlyfilename",
-                            Value = friendlyFileName,
-                            SqlDbType = SqlDbType.NVarChar,
-                            Direction = ParameterDirection.Input
-
-                        };
-
-                        SqlParameter param3 = new SqlParameter
-                        {
-                            ParameterName = "@filepath",
-                            Value = filePathToSave,
-                            SqlDbType = SqlDbType.NVarChar,
-                            Direction = ParameterDirection.Input
-
-                        };
-
-                        SqlParameter param4 = new SqlParameter
-                        {
-                            ParameterName = "@itemid",
-                            Value = viewModel.Id,
-                            SqlDbType = SqlDbType.Int,
-                            Direction = ParameterDirection.Input
-
-                        };
+                            cmd.CommandType = CommandType.StoredProcedure;
 
 
 
+                            SqlParameter param1 = new SqlParameter
+                            {
+                                ParameterName = "@filename",
+                                Value = storageFileName,
+                                SqlDbType = SqlDbType.NVarChar,
+                                Direction = ParameterDirection.Input
+
+                            };
 
 
-                        cmd.Parameters.Add(param1);
-                        cmd.Parameters.Add(param2);
-                        cmd.Parameters.Add(param3);
-                        cmd.Parameters.Add(param4);
+                            SqlParameter param2 = new SqlParameter
+                            {
+                                ParameterName = "@friendlyfilename",
+                                Value = friendlyFileName,
+                                SqlDbType = SqlDbType.NVarChar,
+                                Direction = ParameterDirection.Input
+
+                            };
+
+                            SqlParameter param3 = new SqlParameter
+                            {
+                                ParameterName = "@filepath",
+                                Value = filePathToSave,
+                                SqlDbType = SqlDbType.NVarChar,
+                                Direction = ParameterDirection.Input
+
+                            };
+
+                            SqlParameter param4 = new SqlParameter
+                            {
+                                ParameterName = "@itemid",
+                                Value = viewModel.Id,
+                                SqlDbType = SqlDbType.Int,
+                                Direction = ParameterDirection.Input
+
+                            };
 
 
-                        sqlConnection.Open();
-                        cmd.ExecuteNonQuery();
 
+
+
+                            cmd.Parameters.Add(param1);
+                            cmd.Parameters.Add(param2);
+                            cmd.Parameters.Add(param3);
+                            cmd.Parameters.Add(param4);
+
+
+                            sqlConnection.Open();
+                            cmd.ExecuteNonQuery();
+
+                        }
                     }
-                }
-                catch (Exception e)
-                {
-                    operationResult = "Internal Server Error";
-                }
-            } // end using
+                    catch (Exception e)
+                    {
+                        operationResult = "Internal Server Error";
+                    }
+                } // end using
 
-
+            }//end attachment file is null
             TempData["editResult"] = operationResult;
             return RedirectToAction("EditItem", new { id = viewModel.Id });
         }
